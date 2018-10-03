@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -6,6 +6,11 @@ namespace RecursiveFind
 {
     class Program
     {
+        static void ClearLine()
+        {
+            Console.Write("\r" + new string(' ', Console.WindowWidth - 1) + "\r");
+        }
+
         static void RFind(string path, string ext, string searchTerm, string contains)
         {
             var parseFile = !string.IsNullOrEmpty(contains);
@@ -20,39 +25,43 @@ namespace RecursiveFind
             {
                 throw new Exception("\"path\" is invalid or was not supplied.");
             }
-
-            var chars = new { '\\', '-', '/' };
-
+            
             foreach (var file in new DirectoryInfo(path).GetFiles(ext, SearchOption.AllDirectories))
             {
-                Console.Write("\r");
+                Console.Write($"\rSearching {file.FullName}");
                 if (!searchFiles || file.FullName.ToLower().Contains(searchTerm))
                 {
                     if (!parseFile || ParseFile(file.FullName, contains))
                     {
+                        ClearLine();
                         Console.WriteLine(file.FullName);
                     }
                 }
+                ClearLine();
             }
         }
 
         static bool ParseFile(string path, string contains)
         {
-            var found = false;
+            var searchTerms = contains.Split('|');
+            var countFound = 0;
 
             try
             {
                 var content = File.ReadAllText(path);
-                content = content.Replace("\t", " ").Replace("\r\n", " ").Replace("\r", " ").Replace("\n", " ").Replace("  ", "");
+                content = content.Replace("\t", " ").Replace("\r\n", " ").Replace("\r", " ").Replace("\n", " ").Replace("  ", "").ToLower();
 
-                if (content.ToLower().Contains(contains))
+                foreach (var searchTerm in searchTerms)
                 {
-                    found = true;
+                    if (content.Contains(searchTerm))
+                    {
+                        countFound++;
+                    }
                 }
             }
             catch { }
 
-            return found;
+            return countFound == searchTerms.Length;
         }
 
         static void Help()
